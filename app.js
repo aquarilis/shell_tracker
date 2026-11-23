@@ -149,6 +149,86 @@ $('entryForm').addEventListener('submit', async (e) => {
 
 // --- History ---
 
+let historyRows = null;
+let historyRequest = 0;
+const monthLabels = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+function historyPeriodLabel(bucket) {
+  return bucket.month ? `${monthLabels[bucket.month - 1]} ${bucket.year}` : String(bucket.year);
+}
+
+function updateHistoryPeriods(data) {
+  const select = $('historyPeriod');
+  const selected = select.value;
+  while (select.options.length > 3) select.remove(3);
+  const selectedYear = /^\d{4}$/.test(selected) ? Number(selected) : null;
+  const firstYear = selectedYear ? Math.min(data.firstYear, selectedYear) : data.firstYear;
+  const lastYear = selectedYear ? Math.max(data.lastYear, selectedYear) : data.lastYear;
+  for (let year = lastYear; year >= firstYear; year--) {
+    select.add(new Option(String(year), String(year)));
+  }
+  select.value = selected;
+}
+
+function showHistoryError(message) {
+  $('historyResults').hidden = true;
+  $('historyStatus').hidden = false;
+  $('historyStatus').textContent = message;
+  $('historySummary').textContent = 'Entrées';
+  $('historyList').replaceChildren();
+}
+
+function renderHistoryResults() {
+  if (!historyRows) return;
+  try {
+    const data = historyData(historyRows, $('historyPeriod').value, $('historyGrouping').value, new Date());
+    const maxAmount = Math.max(0, ...data.buckets.map((bucket) => bucket.amount));
+    const maxVolume = Math.max(0, ...data.buckets.map((bucket) => bucket.volume));
+    const chart = $('historyChart');
+    chart.replaceChildren();
+    $('amountAxis').textContent = chf.format(maxAmount);
+    $('volumeAxis').textContent = `${num.format(maxVolume)} L`;
+    $('chartDetail').textContent = 'Touchez une période pour voir ses valeurs.';
+    data.buckets.forEach((bucket) => {
+      const label = historyPeriodLabel(bucket);
+      const detail = `${label} : ${chf.format(bucket.amount)} · ${num.format(bucket.volume)} L · ${bucket.count} plein${bucket.count === 1 ? '' : 's'}`;
+      const group = document.createElement('button');
+      group.type = 'button';
+      group.className = 'chart-group';
+      group.setAttribute('aria-label', detail);
+      const bars = document.createElement('span');
+      bars.className = 'chart-bars';
+      bars.setAttribute('aria-hidden', 'true');
+      for (const [kind, value, max] of [['amount', bucket.amount, maxAmount], ['volume', bucket.volume, maxVolume]]) {
+        const bar = document.createElement('span');
+        bar.className = `chart-bar chart-bar-${kind}`;
+        bar.style.height = `${max ? value / max * 100 : 0}%`;
+        bars.append(bar);
+      }
+      const caption = document.createElement('span');
+      caption.className = 'chart-caption';
+      caption.textContent = label;
+      group.append(bars, caption);
+      group.addEventListener('click', () => { $('chartDetail').textContent = detail; });
+      chart.append(group);
+    });
+    $('chartLayout').hidden = !data.buckets.length;
+    $('chartDetail').hidden = !data.buckets.length;
+    $('historyAmount').textContent = chf.format(data.amount);
+    $('historyVolume').textContent = `${num.format(data.volume)} L`;
+    $('historyCount').textContent = int.format(data.entries.length);
+    $('historySummary').textContent = `Entrées (${int.format(data.entries.length)})`;
+    renderHistory(data.entries);
+    $('historyStatus').textContent = 'Aucune donnée pour cette période.';
+    $('historyStatus').hidden = data.entries.length > 0;
+    $('historyResults').hidden = false;
+    const scroll = document.querySelector('.chart-scroll');
+    scroll.scrollLeft = scroll.scrollWidth;
+  } catch (err) {
+    showHistoryError(err.message);
+  }
+}
+
 function renderHistory(rows) {
   const list = $('historyList');
   list.replaceChildren();
@@ -195,9 +275,19 @@ function renderHistory(rows) {
 }
 
 async function loadHistory() {
+  const request = ++historyRequest;
+  historyRows = null;
+  showHistoryError('Chargement…');
   try {
-    renderHistory(await api('list', { n: 20 }));
+    const rows = await api('list', { n: 'all' });
+    if (request !== historyRequest) return;
+    const data = historyData(rows, 'all', 'year', new Date());
+    updateHistoryPeriods(data);
+    historyRows = rows;
+    renderHistoryResults();
   } catch (err) {
+    if (request !== historyRequest) return;
+    showHistoryError(err.message);
     toast(err.message, true);
   }
 }
@@ -216,6 +306,8 @@ async function deleteRow(r, btn) {
 }
 
 $('refreshHistory').addEventListener('click', loadHistory);
+$('historyPeriod').addEventListener('change', renderHistoryResults);
+$('historyGrouping').addEventListener('change', renderHistoryResults);
 
 // --- Settings ---
 

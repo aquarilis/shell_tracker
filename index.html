@@ -52,7 +52,51 @@
       <div class="toolbar">
         <button type="button" id="refreshHistory">Rafraîchir</button>
       </div>
-      <ul id="historyList" class="history"></ul>
+      <div class="card history-chart-card">
+        <div class="history-filters">
+          <label>Période
+            <select id="historyPeriod">
+              <option value="current">Cette année</option>
+              <option value="previous">L'année dernière</option>
+              <option value="all">Toutes les années</option>
+            </select>
+          </label>
+          <label>Regrouper par
+            <select id="historyGrouping">
+              <option value="month">Mois</option>
+              <option value="year">Année</option>
+            </select>
+          </label>
+        </div>
+        <p id="historyStatus" class="history-status" role="status">Chargement…</p>
+        <div id="historyResults" hidden>
+          <div class="chart-legend">
+            <span><i class="legend-amount" aria-hidden="true"></i> Montant (CHF)</span>
+            <span><i class="legend-volume" aria-hidden="true"></i> Volume (L)</span>
+          </div>
+          <div id="chartLayout" class="chart-layout">
+            <div class="chart-axis" aria-hidden="true">
+              <span id="amountAxis"></span><span>0 CHF</span>
+            </div>
+            <div class="chart-scroll" tabindex="0" aria-label="Graphique de l'historique, défilable horizontalement">
+              <div id="historyChart" class="history-chart" aria-label="Valeurs par période"></div>
+            </div>
+            <div class="chart-axis chart-axis-right" aria-hidden="true">
+              <span id="volumeAxis"></span><span>0 L</span>
+            </div>
+          </div>
+          <p id="chartDetail" class="chart-detail" aria-live="polite">Touchez une période pour voir ses valeurs.</p>
+          <dl class="history-totals">
+            <div><dt>Montant total</dt><dd id="historyAmount"></dd></div>
+            <div><dt>Volume total</dt><dd id="historyVolume"></dd></div>
+            <div><dt>Nombre de pleins</dt><dd id="historyCount"></dd></div>
+          </dl>
+        </div>
+      </div>
+      <details class="history-details">
+        <summary id="historySummary">Entrées</summary>
+        <ul id="historyList" class="history"></ul>
+      </details>
     </section>
 
     <section id="view-settings" class="view">
@@ -76,6 +120,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="history-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

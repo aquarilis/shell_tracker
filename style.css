@@ -69,7 +69,7 @@ label {
 
 .unit { color: var(--muted); font-weight: 400; }
 
-input {
+input, select {
   font: inherit;
   font-size: 17px; /* >=16px prevents iOS zoom on focus */
   font-weight: 400;
@@ -84,6 +84,8 @@ input {
 }
 
 input:focus { outline: 2px solid var(--yellow); border-color: transparent; }
+select { -webkit-appearance: menulist; appearance: auto; }
+select:focus { outline: 2px solid var(--yellow); border-color: transparent; }
 input.invalid { border-color: var(--red); }
 
 .preview {
@@ -118,6 +120,48 @@ button.primary { background: var(--green); color: #fff; font-weight: 600; }
 button:disabled { opacity: 0.5; }
 
 .toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+
+.history-chart-card { gap: 12px; }
+.history-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.history-filters select { padding: 10px 8px; }
+.history-status { margin: 0; color: var(--muted); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; }
+.chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.legend-amount, .chart-bar-amount { background: var(--red); }
+.legend-volume, .chart-bar-volume { background: var(--green); }
+.chart-layout { display: flex; gap: 4px; margin-top: 12px; }
+.chart-layout[hidden] { display: none; }
+.chart-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 160px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.chart-axis-right { text-align: left; }
+.chart-scroll { min-width: 0; flex: 1; overflow-x: auto; }
+.history-chart { display: flex; width: max-content; min-width: 100%; }
+.chart-group {
+  flex: 1 0 52px;
+  min-width: 52px;
+  padding: 0 2px;
+  border-radius: 0;
+  background: transparent;
+}
+.chart-group:focus-visible { outline: 2px solid var(--yellow); outline-offset: -2px; }
+.chart-bars { display: flex; align-items: flex-end; justify-content: center; gap: 3px; height: 160px; border-bottom: 1px solid var(--border); }
+.chart-bar { display: block; width: 14px; }
+.chart-caption { display: block; margin-top: 4px; font-size: 0.7rem; }
+.chart-detail { min-height: 1.2em; margin: 8px 0 0; font-size: 0.85rem; }
+.history-totals { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 12px 0 0; }
+.history-totals dt { color: var(--muted); font-size: 0.8rem; }
+.history-totals dd { margin: 3px 0 0; font-weight: 600; }
+.history-details { margin-top: 16px; }
+.history-details summary { padding: 12px; background: var(--card); border-radius: 10px; cursor: pointer; font-weight: 600; }
+.history-details[open] summary { margin-bottom: 8px; }
 
 .history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 

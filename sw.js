@@ -1,5 +1,5 @@
-const CACHE = 'shell-tracker-v1';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icons/icon-180.png'];
+const CACHE = 'shell-tracker-v2';
+const SHELL = ['./', 'index.html', 'style.css', 'history-data.js', 'app.js', 'manifest.webmanifest', 'icons/icon-180.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
