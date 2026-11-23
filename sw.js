@@ -1,4 +1,4 @@
-const CACHE = 'shell-tracker-v2';
+const CACHE = 'shell-tracker-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'history-data.js', 'app.js', 'manifest.webmanifest', 'icons/icon-180.png'];
 
 self.addEventListener('install', (e) => {

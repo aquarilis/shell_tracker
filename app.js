@@ -151,6 +151,7 @@ $('entryForm').addEventListener('submit', async (e) => {
 
 let historyRows = null;
 let historyRequest = 0;
+let pendingDelete = null;
 const monthLabels = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 
 function historyPeriodLabel(bucket) {
@@ -170,25 +171,26 @@ function updateHistoryPeriods(data) {
   select.value = selected;
 }
 
-function showHistoryError(message) {
+function showHistoryError(message, rows = null) {
   $('historyResults').hidden = true;
   $('historyStatus').hidden = false;
   $('historyStatus').textContent = message;
-  $('historySummary').textContent = 'Entrées';
-  $('historyList').replaceChildren();
+  $('historySummary').textContent = rows ? `Toutes les entrées (${int.format(rows.length)})` : 'Entrées';
+  if (rows) renderHistory(rows);
+  else $('historyList').replaceChildren();
 }
 
 function renderHistoryResults() {
   if (!historyRows) return;
   try {
     const data = historyData(historyRows, $('historyPeriod').value, $('historyGrouping').value, new Date());
-    const maxAmount = Math.max(0, ...data.buckets.map((bucket) => bucket.amount));
-    const maxVolume = Math.max(0, ...data.buckets.map((bucket) => bucket.volume));
+    const maxAmount = data.buckets.reduce((max, bucket) => Math.max(max, bucket.amount), 0);
+    const maxVolume = data.buckets.reduce((max, bucket) => Math.max(max, bucket.volume), 0);
     const chart = $('historyChart');
     chart.replaceChildren();
     $('amountAxis').textContent = chf.format(maxAmount);
     $('volumeAxis').textContent = `${num.format(maxVolume)} L`;
-    $('chartDetail').textContent = 'Touchez une période pour voir ses valeurs.';
+    $('chartDetail').textContent = 'Faites défiler puis touchez une période pour voir ses valeurs.';
     data.buckets.forEach((bucket) => {
       const label = historyPeriodLabel(bucket);
       const detail = `${label} : ${chf.format(bucket.amount)} · ${num.format(bucket.volume)} L · ${bucket.count} plein${bucket.count === 1 ? '' : 's'}`;
@@ -225,7 +227,7 @@ function renderHistoryResults() {
     const scroll = document.querySelector('.chart-scroll');
     scroll.scrollLeft = scroll.scrollWidth;
   } catch (err) {
-    showHistoryError(err.message);
+    showHistoryError(`${err.message} — graphique et filtre indisponibles ; toutes les entrées sont affichées.`, historyRows);
   }
 }
 
@@ -267,7 +269,13 @@ function renderHistory(rows) {
     del.className = 'delete';
     del.textContent = 'Suppr.';
     del.setAttribute('aria-label', `Supprimer le plein du ${formatDate(r.date)}`);
-    del.addEventListener('click', () => deleteRow(r, del));
+    del.addEventListener('click', () => {
+      pendingDelete = { row: r, button: del };
+      const amount = typeof r.amount === 'number' ? chf.format(r.amount) : String(r.amount);
+      $('deleteDetails').textContent = `${formatDate(r.date)} · ${amount} · ${num.format(r.volume)} L · ${int.format(r.mileage)} km`;
+      $('deleteDialog').showModal();
+      $('cancelDelete').focus();
+    });
 
     li.append(main, del);
     list.append(li);
@@ -278,22 +286,24 @@ async function loadHistory() {
   const request = ++historyRequest;
   historyRows = null;
   showHistoryError('Chargement…');
+  let rows;
   try {
-    const rows = await api('list', { n: 'all' });
+    const result = await api('list', { n: 'all' });
     if (request !== historyRequest) return;
+    if (!Array.isArray(result)) throw new Error('Réponse historique invalide');
+    rows = result;
     const data = historyData(rows, 'all', 'year', new Date());
     updateHistoryPeriods(data);
     historyRows = rows;
     renderHistoryResults();
   } catch (err) {
     if (request !== historyRequest) return;
-    showHistoryError(err.message);
+    showHistoryError(rows ? `${err.message} — graphique et filtre indisponibles ; toutes les entrées sont affichées.` : err.message, rows);
     toast(err.message, true);
   }
 }
 
 async function deleteRow(r, btn) {
-  if (!confirm(`Supprimer le plein du ${formatDate(r.date)} (${int.format(r.mileage)} km) ?`)) return;
   btn.disabled = true;
   try {
     await api('delete', { row: r.row, date: r.date, mileage: r.mileage });
@@ -304,6 +314,24 @@ async function deleteRow(r, btn) {
     toast(err.message, true);
   }
 }
+
+$('cancelDelete').addEventListener('click', () => $('deleteDialog').close());
+$('deleteDialog').addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    $('deleteDialog').close();
+  }
+});
+$('deleteDialog').addEventListener('close', () => {
+  if (!$('deleteDialog').open) pendingDelete = null;
+});
+$('confirmDelete').addEventListener('click', () => {
+  if (!pendingDelete) return;
+  const { row, button } = pendingDelete;
+  pendingDelete = null;
+  $('deleteDialog').close();
+  deleteRow(row, button);
+});
 
 $('refreshHistory').addEventListener('click', loadHistory);
 $('historyPeriod').addEventListener('change', renderHistoryResults);

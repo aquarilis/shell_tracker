@@ -31,18 +31,18 @@ function historyData(rows, period, grouping, now) {
     };
   });
 
-  const years = entries.map((entry) => entry.year);
-  const firstYear = years.length ? Math.min(...years, currentYear) : currentYear;
-  const lastYear = years.length ? Math.max(...years, currentYear) : currentYear;
+  const firstYear = entries.reduce((first, entry) => Math.min(first, entry.year), currentYear);
+  const lastYear = entries.reduce((last, entry) => Math.max(last, entry.year), currentYear);
   let startYear;
   let endYear;
   let endMonth;
   if (period === 'all') {
     if (!entries.length) return { entries: [], buckets: [], amount: 0, volume: 0, firstYear, lastYear };
-    startYear = Math.min(...years);
+    startYear = entries.reduce((first, entry) => Math.min(first, entry.year), entries[0].year);
     endYear = lastYear;
-    endMonth = Math.max(endYear === currentYear ? currentMonth : 0,
-      ...entries.filter((entry) => entry.year === endYear).map((entry) => entry.month));
+    endMonth = entries.reduce((last, entry) =>
+      entry.year === endYear ? Math.max(last, entry.month) : last,
+    endYear === currentYear ? currentMonth : 0);
   } else {
     startYear = endYear = period === 'current' ? currentYear
       : period === 'previous' ? currentYear - 1 : Number(period);

@@ -85,7 +85,7 @@
               <span id="volumeAxis"></span><span>0 L</span>
             </div>
           </div>
-          <p id="chartDetail" class="chart-detail" aria-live="polite">Touchez une période pour voir ses valeurs.</p>
+          <p id="chartDetail" class="chart-detail" aria-live="polite">Faites défiler puis touchez une période pour voir ses valeurs.</p>
           <dl class="history-totals">
             <div><dt>Montant total</dt><dd id="historyAmount"></dd></div>
             <div><dt>Volume total</dt><dd id="historyVolume"></dd></div>
@@ -117,6 +117,16 @@
     <button type="button" data-view="history">Historique</button>
     <button type="button" data-view="settings">Réglages</button>
   </nav>
+
+  <dialog id="deleteDialog" class="delete-dialog" aria-labelledby="deleteTitle" aria-describedby="deleteDetails deleteWarning">
+    <h2 id="deleteTitle">Supprimer ce plein ?</h2>
+    <p id="deleteDetails"></p>
+    <p id="deleteWarning">Cette suppression est définitive.</p>
+    <div class="delete-actions">
+      <button type="button" id="cancelDelete" autofocus>Annuler</button>
+      <button type="button" id="confirmDelete">Supprimer définitivement</button>
+    </div>
+  </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
